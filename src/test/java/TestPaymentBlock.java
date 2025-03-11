@@ -6,15 +6,13 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.time.Duration;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestDetailsLink {
+public class TestPaymentBlock {
     private WebDriver driver;
     private WebDriverWait wait;
-    private static final Logger logger = LoggerFactory.getLogger(TestDetailsLink.class); // Логгер
+    private static final Logger logger = LoggerFactory.getLogger(TestPaymentBlock.class); // Логгер
 
     @Before
     public void setUp() {
@@ -26,7 +24,6 @@ public class TestDetailsLink {
         wait = new WebDriverWait(driver, Duration.ofSeconds(5)); // Увеличенное время ожидания
         driver.manage().window().maximize();
         logger.info("Браузер запущен и настроен"); // Логируем запуск браузера
-
     }
 
     @After
@@ -39,7 +36,7 @@ public class TestDetailsLink {
     }
 
     @Test
-    public void testDetailsLink() {
+    public void testPaymentBlock() {
         // Открываем страницу
         driver.get("https://www.mts.by");
         logger.info("Открыта страница: https://www.mts.by"); // Логируем открытие страницы
@@ -62,35 +59,40 @@ public class TestDetailsLink {
         } catch (TimeoutException e) {
             logger.info("Окно с куки не появилось или не удалось найти элемент"); // Логируем, если окно с куки не появилось
         }
-        // Ожидаем появления ссылки "Подробнее о сервисе"
-        WebElement detailsLink = wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//*[@id=\"pay-section\"]/div/div/div[2]/section/div/a")));
-        assertTrue(detailsLink.isDisplayed(), "Ссылка 'Подробнее о сервисе' не отображается");
-        logger.info("Ссылка 'Подробнее о сервисе' отображается"); // Логируем отображение ссылки
 
-        // Проверяем текст ссылки (опционально)
-        String expectedLinkText = "Подробнее о сервисе";
-        String actualLinkText = detailsLink.getText();
-        assertEquals(expectedLinkText, actualLinkText, "Текст ссылки не соответствует ожидаемому");
-        logger.info("Текст ссылки соответствует ожидаемому: {}", actualLinkText); // Логируем текст ссылки
+        // Ожидаем появления блока оплаты
+        WebElement paymentBlock = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("/html/body/div[6]/main/div/div[4]/div[1]/div/div/div[2]/section/div")));
+        assertTrue(paymentBlock.isDisplayed(), "Блок оплаты не отображается");
+        logger.info("Блок оплаты отображается"); // Логируем отображение блока оплаты
 
-        // Логируем текущий URL до клика
-        logger.info("Текущий URL до клика: {}", driver.getCurrentUrl());
+        // Выбираем "Услуги связи" в первом поле
+        WebElement serviceTypeButton = wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("/html/body/div[6]/main/div/div[4]/div[1]/div/div/div[2]/section/div/div[1]/div[1]/div[2]/button/span[1]")));
 
-        // Кликаем по ссылке
-        detailsLink.click();
-        logger.info("Клик по ссылке 'Подробнее о сервисе' выполнен");
+        // Используем JavaScript для клика, если обычный клик не работает
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", serviceTypeButton);
+        logger.info("Выбрана услуга: Услуги связи"); // Логируем выбор услуги
 
-        // Ожидаем перехода на новую страницу
-        wait.until(ExpectedConditions.urlToBe("https://www.mts.by/help/poryadok-oplaty-i-bezopasnost-internet-platezhey/"));
-        logger.info("Текущий URL после перехода: {}", driver.getCurrentUrl());
+        // Заполняем поле "Номер телефона" (после +375)
+        WebElement phoneNumberField = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("/html/body/div[6]/main/div/div[4]/div[1]/div/div/div[2]/section/div/div[1]/div[2]/form[1]/div[1]/input")));
+        phoneNumberField.sendKeys("297777777");
+        logger.info("Заполнено поле 'Номер телефона': 297777777"); // Логируем заполнение поля
 
-        // Проверяем, что URL соответствует ожидаемому
-        assertEquals("https://www.mts.by/help/poryadok-oplaty-i-bezopasnost-internet-platezhey/", driver.getCurrentUrl(),
-                "Переход на страницу с деталями не выполнен");
-        logger.info("Переход на страницу с деталями выполнен: {}", driver.getCurrentUrl());
+        // Заполняем поле "Сумма"
+        WebElement amountField = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("/html/body/div[6]/main/div/div[4]/div[1]/div/div/div[2]/section/div/div[1]/div[2]/form[1]/div[2]/input")));
+        amountField.sendKeys("10"); // Пример суммы
+        logger.info("Заполнено поле 'Сумма': 10"); // Логируем заполнение поля
+
+        // Проверяем, что кнопка "Продолжить" активна и кликабельна
+        WebElement continueButton = wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("/html/body/div[6]/main/div/div[4]/div[1]/div/div/div[2]/section/div/div[1]/div[2]/form[1]/button")));
+        assertTrue(continueButton.isEnabled(), "Кнопка 'Продолжить' не активна");
+        logger.info("Кнопка 'Продолжить' активна и кликабельна"); // Логируем проверку кнопки
 
         // Логируем успешное завершение теста
-        logger.info("Тест testDetailsLink завершен успешно");
+        logger.info("Тест testPaymentBlock завершен успешно");
     }
 }
